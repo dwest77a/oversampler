@@ -16,16 +16,11 @@ import numpy.ma as ma
 
 from netCDF4 import Dataset
 
-from mpl_toolkits.basemap import Basemap
 from matplotlib.patches import Ellipse, Rectangle
 
 from getopt import getopt
 
 import math
-
-sys.path.append('/home/users/dwest77/Documents/std_py')
-import find_files as ff
-import pmath as pm
 
 # Input from l2 base-filtered files, output to oversampled l2 files
 BASE_INPUT  = '/gws/pw/j05/rsg_share/public/transfer/barry/6ad76b04-b3df-11eb-a4d3-024ad8e814ad/{}_l2/valid_l2a/{}/{}/{}'

@@ -7,6 +7,25 @@ Repository Collated 16/02/2023
  - activate the virtual environment `source /path/to/venv/bin/activate`
  - install dependencies `pip install -r requirements.txt`
 
+# Known issues
+With outdated files, new file changes are as follows:
+```
+sys.path.append('/home/users/dwest77/Documents/std_py')
+import find_files as ff
+import pmath as pm
+```
+This syntax block in the imports has been replaced with pyanalysis library:
+```
+from pyanalysis import fileIO as ff
+from pyanalysis import datasetMath as dm
+```
+
+Please check https://github.com/dwest77a/pyanalysis for the latest scripts under pyanalysis to reference.
+
+Note: Current visualisation functions use matplotlib basemaps which require backdating. Visualisation scripts thus no longer function properly, so please comment out any mentions to mpl_toolkits in this repository.
+
+For current development, focus on base_validation (l2basefilter.py) and oversampler (ostool.py) scripts
+
 ## Contents:
 
 ### Refs

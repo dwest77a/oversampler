@@ -5,17 +5,6 @@ from getopt import getopt
 
 import numpy as np
 from netCDF4 import Dataset
-
-# Standard dw package tools
-STD_PY_LOC = '/home/users/dwest77/Documents/std_py'
-try:
-    sys.path.append(STD_PY_LOC)
-    import file_import as fm
-    import find_files as ff
-    import pmath as pm
-except: 
-    print('ImportError: Std_py library missing: requires file_import.py, find_files.py and pmath.py as minimum')
-    sys.exit()
     
     
 # Combine daily files into monthly gridded files

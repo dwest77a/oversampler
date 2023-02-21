@@ -21,15 +21,9 @@ from getopt import getopt
 import math
 
 # Standard dw package tools
-STD_PY_LOC = '/home/users/dwest77/Documents/std_py'
-try:
-    sys.path.append(STD_PY_LOC)
-    import find_files as ff
-    import pmath as pm
-    import output_data as od
-except: 
-    print('ImportError: Std_py library missing: requires find_files.py and pmath.py as minimum')
-    sys.exit()
+from pyanalysis import fileIO as ff
+from pyanalysis import datasetMath as dm
+#from pyanalysis import visual as vis
 
 mmair = 28.964001
 mmh2o = 18

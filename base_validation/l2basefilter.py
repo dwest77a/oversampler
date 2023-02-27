@@ -1,7 +1,12 @@
-## L2 Data Base Filter
-## 	- Version 1.0 - 10/05/2021 09:15
-## 	- Formatted - 28/06/2021
-## Daniel Westwood - daniel.westwood@stfc.ac.uk
+"""
+L2 base filter
+--------------
+Takes pixel-by-pixel list-format data from L2 files and filters each pixel looking at specific pixel attributes.
+
+"""
+__author__    = "Daniel Westwood"
+__date__      = "27-02-2023"
+__copyright__ = "Copyright 2020 United Kingdom Research and Innovation"
 
 import os
 import sys
@@ -20,32 +25,30 @@ from getopt import getopt
 
 import math
 
-# Standard dw package tools
+# Standard pyanalysis package tools
 from pyanalysis import fileIO as ff
 from pyanalysis import datasetMath as dm
-#from pyanalysis import visual as vis
 
-mmair = 28.964001
-mmh2o = 18
-g = 9.80665
-dw = 1000
-PI = 3.1415926
+## Constants for calculations
+mmair = 28.964001     # molecular mass of air
+mmh2o = 18            # molecular mass of water
+g     = 9.80665       # gravitational acceleration
+dw    = 1000          # density of water
+PI    = 3.1415926     # pi (circles)
 
+VERBOSE = False
 
-options, operands = getopt(sys.argv[1:], "", ["date=", "version=", "instrt=", "extension="])
-# Determine options and processing method
-
-date = operands[0]
-version = operands[1]
-instrt = operands[2]
-try:
-	extension = operands[3]
-except:
-	extension = ''
-
-INPUTS = {'iasi':['/gws/pw/j05/rsg_share/public/transfer/barry/6ad76b04-b3df-11eb-a4d3-024ad8e814ad/iasi_l2/valid_l2a/v00.00/{}/{}/{}',
-                  '/gws/pw/j05/rsg_share/public/projects/ims/data/lv2/output_ghg_cv9_v123_lam_nat_nfo33_fgsnwp_nobc_newbc_rbc_ram4_rem20-ncam_rcl5_raer6st_rmg_oap_cnv2_ixam7-8_o3f110_swir2/metopa/{}/{}/{}'],
-          'cris':['/gws/pw/j05/rsg_share/public/transfer/barry/6ad76b04-b3df-11eb-a4d3-024ad8e814ad/cris_l2/valid_l2a/v00.00c/{}/{}/{}','']}
+## Input locations for files (v00.00 was unfiltered raw data copied from elsewhere)
+INPUTS = {
+	'iasi':[
+		'/gws/pw/j05/rsg_share/public/transfer/barry/6ad76b04-b3df-11eb-a4d3-024ad8e814ad/iasi_l2/valid_l2a/v00.00/{}/{}/{}',
+		'/gws/pw/j05/rsg_share/public/projects/ims/data/lv2/output_ghg_cv9_v123_lam_nat_nfo33_fgsnwp_nobc_newbc_rbc_ram4_rem20-ncam_rcl5_raer6st_rmg_oap_cnv2_ixam7-8_o3f110_swir2/metopa/{}/{}/{}'
+	],
+	'cris':[
+		'/gws/pw/j05/rsg_share/public/transfer/barry/6ad76b04-b3df-11eb-a4d3-024ad8e814ad/cris_l2/valid_l2a/v00.00c/{}/{}/{}',
+		''
+	]
+}
 
 def calculate_dt1k(t, tsk, press):
 	print('calculating dt1000')
@@ -123,12 +126,16 @@ def get_valid_data(variables, ifile, graph_data, date):
 	
 	ncf = Dataset(ifile, 'r',format="NETCDF4")
 	ncf_vars = {}
-	print('Getting ncf info')
+	if VERBOSE:
+		print('Getting ncf info')
 	write_errs(np.array(ncf['w']), np.array(ncf['w_err']))
 	write_errs(np.array(ncf['t']), np.array(ncf['t_err']))
 	write_errs(np.array(ncf['mgf']), np.array(ncf['mgf_err']))
+
 	t1 = np.array(ncf['w']) > 5*np.array(ncf['w_err'])
-	print(np.count_nonzero(t1), t1.size)
+
+	if VERBOSE:
+		print(np.count_nonzero(t1), t1.size)
 	
 	## Extract all necessary variables for calculations ##
 	press     = np.array(ncf['p'])
@@ -164,7 +171,8 @@ def get_valid_data(variables, ifile, graph_data, date):
 	
 	dates_arr = np.repeat(float(str(date[0]) + str(date[1]) + str(date[2])), len(surf))
 	# Set and create full filter
-	print('assembling filters')
+	if VERBOSE:
+		print('assembling filters')
 	
 	#cfr_filter         = cfrs < 0.2
 	cfr_filter         = cfrs < 0.05
@@ -190,7 +198,8 @@ def get_valid_data(variables, ifile, graph_data, date):
 	tpwsec        = tpw / sec_arr
 
 	## Error Calculations ##
-	print('calculating errors')
+	if VERBOSE:
+		print('calculating errors')
 	wat_col_means = np.nanmean(wat, axis=1) # Mean of all water columns
 	wat_mean_tess = np.reshape( np.repeat(wat_col_means, len(wat[0])), (len(wat_col_means), len(wat[0])) )
 	wat_std_errs = np.sqrt( np.sum( np.square(wat - wat_mean_tess) ) ) / len(wat[0]) # 6000 values
@@ -239,13 +248,16 @@ def get_valid_data(variables, ifile, graph_data, date):
 	## Add data to existing array ##
 	
 	if len(part_data[0]) == 0:
-		print('No valid pixels')
+		if VERBOSE:
+			print('No valid pixels')
 		return graph_data, None, None
 	else:
-		print('Valid pixels: ',len(part_data[0]))
+		if VERBOSE:
+			print('Valid pixels: ',len(part_data[0]))
 		for qindex in range(len(part_data)):
 			graph_data[qindex] = np.append(graph_data[qindex], part_data[qindex])
-		print('Added to dataset')
+		if VERBOSE:
+			print('Added to dataset')
 		return graph_data, tpw_max_min, var_max_min
 		
 	## End function get_valid_data
@@ -349,28 +361,36 @@ def main(date, version):
 		inpath          = base_input.format(date_arr[0], date_arr[1], date_arr[2])
 		inpath_alpha    = second_input.format(date_arr[0], date_arr[1], date_arr[2])
 		
+		# Some dates have multiple files so need to list all
 		files_array     = ff.list_files(inpath, starts='ral',ends='.nc')
 		files_arr_alpha = ff.list_files(inpath_alpha, starts='ral',ends='.nc')
 		
-		filled_arr = None
+
+		# Select from either initial or secondary store (there were two at one point)
+		checkfile_arr = None
 		if len(files_array) > 0:
-			filled_arr = files_array
+			checkfile_arr = files_array
 		elif len(files_arr_alpha) > 0:
-			filled_arr = files_arr_alpha
+			checkfile_arr = files_arr_alpha
 			
-		if filled_arr != None:
-			files_array = filled_arr
+		# If we have some files to deal with
+		if checkfile_arr != None:
+			files_array = checkfile_arr
 			
-			for ix in range(0,len(files_array)): ###
-				print('File {} of {} '.format(ix+1, len(files_array)))
+			for ix in range(0,len(files_array)): # Complete for each file in the set found for this date
+				if VERBOSE:
+					print('File {} of {} '.format(ix+1, len(files_array)))
+
+				# Perform filtering
 				graph_data, tpw_mm, var_mm = get_valid_data(variables, files_array[ix], graph_data, date_arr)
 				
-				# Assign Max Mins
+				# Assign Max Mins - variable of focus is tpw
 				if tpw_mm != None:
 					if tpw_mm[0] > tpw_max_min[0]:
 						tpw_max_min[0] = tpw_mm[0]
 					if tpw_mm[1] < tpw_max_min[1]:
 						tpw_max_min[1] = tpw_mm[1]
+
 				if var_mm != None:
 					for vindex in range(len(variables)):
 						if var_mm[vindex][0] > var_max_min[vindex][0]:
@@ -393,11 +413,33 @@ def main(date, version):
 			print('No files for specified date for either case - {}'.format(date))
 	# Send to text file
 	
-date_arr = [date[0:4],date[4:6],format(int(date[6:len(date)]),'02d')]
-filename = '{}_valid_l2a_{}_{}{}.nc'.format(instrt, date, version, extension)
-filepath = '/gws/pw/j05/rsg_share/public/transfer/barry/6ad76b04-b3df-11eb-a4d3-024ad8e814ad/{}_l2/valid_l2a/{}/{}/{}/'.format(instrt, version, date_arr[0],date_arr[1])
 
-if not os.path.isfile(filename+filepath):
-	main(date,version)
-else:
-	print('skipping existing file')
+if __name__ == "__main__":
+
+	### Parameters
+	# This section may change in future depending on where files are located and how they are named. 
+
+	options, operands = getopt(sys.argv[1:], "", ["date=", "version=", "instrt=", "extension="])
+	# Running requires date, version, instrt, extension (which can be blank)
+
+	date = operands[0]
+	version = operands[1]
+	instrt = operands[2]
+	try:
+		extension = operands[3]
+	except:
+		extension = ''
+
+	# Single file operation - use operands to select a file to filter.
+
+	date_arr = [date[0:4],date[4:6],format(int(date[6:len(date)]),'02d')]
+
+
+	# Check if the output file exists already in the correct dir (version number)
+	filename = '{}_valid_l2a_{}_{}{}.nc'.format(instrt, date, version, extension)
+	filepath = '/gws/pw/j05/rsg_share/public/transfer/barry/6ad76b04-b3df-11eb-a4d3-024ad8e814ad/{}_l2/valid_l2a/{}/{}/{}/'.format(instrt, version, date_arr[0],date_arr[1])
+
+	if not os.path.isfile(filename+filepath):
+		main(date,version)
+	else:
+		print('skipping existing file')

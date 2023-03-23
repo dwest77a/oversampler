@@ -52,6 +52,7 @@ Scripts for performing main oversampling method to L2 data to produce daily grid
 ## 3. Gridding
 Scripts for performing averaging to concatenate daily gridded files to monthly files
  - l2gridding.py is the main script (with variations for different purposes)
+ - l2osgridding.py will create monthly averaged files from the oversampled files.
 
 ## 4. Graphbinning
 Contains a script for binning l2 graph data - needs tidying so ignore for now.

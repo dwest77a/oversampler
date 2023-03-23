@@ -1,3 +1,13 @@
+"""
+L2-L3 gridding script
+--------------
+Takes L2 pixel-by-pixel daily files and regrids to a regular grid with monthly files
+
+"""
+__author__	= "Daniel Westwood"
+__date__	  = "23-03-2023"
+__copyright__ = "Copyright 2020 United Kingdom Research and Innovation"
+
 import os
 import sys
 from datetime import datetime
@@ -207,43 +217,43 @@ class var_grid:
 		ncf_new.close()
 
 
-
-options, operands = getopt(sys.argv[1:], "", ["year=","month=","dn=","instrt=","version=","subversion="])
-
-year = operands[0]
-month = operands[1]
-dn = operands[2]
-instrt = operands[3]
-version = operands[4]
-subversion = operands[5]
-
-instrt_long = instrt
-
-fpath = '/gws/pw/j05/rsg_share/public/transfer/barry/6ad76b04-b3df-11eb-a4d3-024ad8e814ad/{}_l2/gridded_l2/{}/{}/{}/'.format(instrt_long, version, year, month)
-fname = '{}_gridded_l2_{}{}{}_{}_{}.nc'.format(instrt, year, month, dn, version, subversion) 
-if True:#not os.path.isfile(fpath+fname):
-
-	filename = '/gws/pw/j05/rsg_share/public/transfer/barry/6ad76b04-b3df-11eb-a4d3-024ad8e814ad/{}_l2/valid_l2a/{}/{}/{}/{}_valid_l2a_{}{}{}_{}.nc'
-	map_bounds = [-89.5,89.5,-179.5,179.5]
-	res = 0.25
-	nh3_map = var_grid(map_bounds, res, ['nh3','tpw_base','tpw','dt1000', 'nh3_adj'], dn)
-
-	not_empty = False
-	for d in range(1,31):
-		day = format(d,'02d')
-		if True:
-			e = nh3_map.add_file(filename.format(instrt_long, version, year, month, instrt, year, month, day, version))
-			not_empty = not_empty or e
-		#except:
-			#print('skipped',year, month, day)
-	if not_empty:
-		if not os.path.isdir(fpath):
-			os.makedirs(fpath)
-		if not os.path.isfile(fpath+fname):
-			os.system('touch {}{}'.format(fpath, fname))
-		nh3_map.average_grid()
-		nh3_map.save_data(fpath+fname)
-		print('saved to ',fpath+fname)
-else:
-	print('Skipping existing file')
-
+if __name__ == '__main__':
+    options, operands = getopt(sys.argv[1:], "", ["year=","month=","dn=","instrt=","version=","subversion="])
+    
+    year = operands[0]
+    month = operands[1]
+    dn = operands[2]
+    instrt = operands[3]
+    version = operands[4]
+    subversion = operands[5]
+    
+    instrt_long = instrt
+    
+    fpath = '/gws/pw/j05/rsg_share/public/transfer/barry/6ad76b04-b3df-11eb-a4d3-024ad8e814ad/{}_l2/gridded_l2/{}/{}/{}/'.format(instrt_long, version, year, month)
+    fname = '{}_gridded_l2_{}{}{}_{}_{}.nc'.format(instrt, year, month, dn, version, subversion) 
+    if True:#not os.path.isfile(fpath+fname):
+    
+    	filename = '/gws/pw/j05/rsg_share/public/transfer/barry/6ad76b04-b3df-11eb-a4d3-024ad8e814ad/{}_l2/valid_l2a/{}/{}/{}/{}_valid_l2a_{}{}{}_{}.nc'
+    	map_bounds = [-89.5,89.5,-179.5,179.5]
+    	res = 0.25
+    	nh3_map = var_grid(map_bounds, res, ['nh3','tpw_base','tpw','dt1000', 'nh3_adj'], dn)
+    
+    	not_empty = False
+    	for d in range(1,31):
+    		day = format(d,'02d')
+    		if True:
+    			e = nh3_map.add_file(filename.format(instrt_long, version, year, month, instrt, year, month, day, version))
+    			not_empty = not_empty or e
+    		#except:
+    			#print('skipped',year, month, day)
+    	if not_empty:
+    		if not os.path.isdir(fpath):
+    			os.makedirs(fpath)
+    		if not os.path.isfile(fpath+fname):
+    			os.system('touch {}{}'.format(fpath, fname))
+    		nh3_map.average_grid()
+    		nh3_map.save_data(fpath+fname)
+    		print('saved to ',fpath+fname)
+    else:
+    	print('Skipping existing file')
+    

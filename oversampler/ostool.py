@@ -1,7 +1,12 @@
-## Oversampler Tool Master Version
-## Version 1    - 17/08/21
-#	- Assembled previous versions together; scan angle, temperature filters combined for iasi/cris
-## Daniel Westwood - daniel.westwood@stfc.ac.uk
+"""
+L2 oversampling tool
+--------------
+Takes L2 pixel-by-pixel filtered files and performs oversampling to create daily files.
+
+"""
+__author__	= "Daniel Westwood"
+__date__	  = "23-03-2023"
+__copyright__ = "Copyright 2020 United Kingdom Research and Innovation"
 import os
 import sys
 
@@ -490,36 +495,33 @@ class l3_file: # All files going into a single end file
 			for iv in range(len(self.variables)):
 				self.basedatae[iv] = self.average_oversample(self.calcdatae[iv])
 			self.save_to_nc()
-			
-variables = ['nh3','nh3tpwvza','tpw','tpwb']
-longs = ['Oversampled Ammonia',
-				'Oversampled Adjusted Ammonia',
-				'Oversampled TPWVZA',
-				'Oversampled TPW']
-units = ['ppbv','ppbv','mm','mm']
-				
-def main(date):
 
-	l3f = l3_file(date)	
-
-options, operands = getopt(sys.argv[1:], "", ["date=","instrt=","version=","subversion=","time="])
-# Determine options and processing method
-
-date = operands[0]
-version = operands[2]
-subversion = operands[3]
-instrt = operands[1]
-time = operands[4]
-
-# CRIS L2 NH3 TPW Adjustment Values
-if instrt.lower() == 'cris':
-	SCALE = 0.0012
-	OFFSET = 0.0024
-
-# IASI L2 NH3 TPW Adjustment Values
-elif instrt.lower() == 'iasi':
-	SCALE = 0.003
-	OFFSET = -0.06
-SD = 0.09
-
-l3f = l3_file(date, instrt, version, subversion, time, variables, longs, units)
+if __name__ == '__main__':
+    variables = ['nh3','nh3tpwvza','tpw','tpwb']
+    longs = ['Oversampled Ammonia',
+    				'Oversampled Adjusted Ammonia',
+    				'Oversampled TPWVZA',
+    				'Oversampled TPW']
+    units = ['ppbv','ppbv','mm','mm']
+    
+    options, operands = getopt(sys.argv[1:], "", ["date=","instrt=","version=","subversion=","time="])
+    # Determine options and processing method
+    
+    date = operands[0]
+    version = operands[2]
+    subversion = operands[3]
+    instrt = operands[1]
+    time = operands[4]
+    
+    # CRIS L2 NH3 TPW Adjustment Values
+    if instrt.lower() == 'cris':
+    	SCALE = 0.0012
+    	OFFSET = 0.0024
+    
+    # IASI L2 NH3 TPW Adjustment Values
+    elif instrt.lower() == 'iasi':
+    	SCALE = 0.003
+    	OFFSET = -0.06
+    SD = 0.09
+    
+    l3f = l3_file(date, instrt, version, subversion, time, variables, longs, units)

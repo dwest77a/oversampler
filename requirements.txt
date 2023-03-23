@@ -16,7 +16,7 @@ packaging==21.3
 pandas==1.5.1
 Pillow==9.4.0
 pluggy==1.0.0
-pyanalysis @ git+https://github.com/dwest77a/pyanalysis.git@dbafe7524766165630c489e5355534082611623c
+pyanalysis @ git+https://github.com/dwest77a/pyanalysis.git@v1.0
 pyparsing==3.0.9
 pytest==7.2.0
 python-dateutil==2.8.2

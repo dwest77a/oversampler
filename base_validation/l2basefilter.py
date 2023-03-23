@@ -4,8 +4,8 @@ L2 base filter
 Takes pixel-by-pixel list-format data from L2 files and filters each pixel looking at specific pixel attributes.
 
 """
-__author__    = "Daniel Westwood"
-__date__      = "27-02-2023"
+__author__	= "Daniel Westwood"
+__date__	  = "27-02-2023"
 __copyright__ = "Copyright 2020 United Kingdom Research and Innovation"
 
 import os
@@ -29,26 +29,16 @@ import math
 from pyanalysis import fileIO as ff
 from pyanalysis import datasetMath as dm
 
+import json
+
 ## Constants for calculations
-mmair = 28.964001     # molecular mass of air
-mmh2o = 18            # molecular mass of water
-g     = 9.80665       # gravitational acceleration
-dw    = 1000          # density of water
-PI    = 3.1415926     # pi (circles)
+mmair = 28.964001	 # molecular mass of air
+mmh2o = 18			# molecular mass of water
+g	 = 9.80665	   # gravitational acceleration
+dw	= 1000		  # density of water
+PI	= 3.1415926	 # pi (circles)
 
 VERBOSE = False
-
-## Input locations for files (v00.00 was unfiltered raw data copied from elsewhere)
-INPUTS = {
-	'iasi':[
-		'/gws/pw/j05/rsg_share/public/transfer/barry/6ad76b04-b3df-11eb-a4d3-024ad8e814ad/iasi_l2/valid_l2a/v00.00/{}/{}/{}',
-		'/gws/pw/j05/rsg_share/public/projects/ims/data/lv2/output_ghg_cv9_v123_lam_nat_nfo33_fgsnwp_nobc_newbc_rbc_ram4_rem20-ncam_rcl5_raer6st_rmg_oap_cnv2_ixam7-8_o3f110_swir2/metopa/{}/{}/{}'
-	],
-	'cris':[
-		'/gws/pw/j05/rsg_share/public/transfer/barry/6ad76b04-b3df-11eb-a4d3-024ad8e814ad/cris_l2/valid_l2a/v00.00c/{}/{}/{}',
-		''
-	]
-}
 
 def calculate_dt1k(t, tsk, press):
 	print('calculating dt1000')
@@ -60,7 +50,7 @@ def calculate_dt1k(t, tsk, press):
 	z3 = z(865.96)
 	
 	t1k = t[:,91] + (t[:,92] - t[:,91]) * ( (z3 - z1)/(z2-z1) )
-	dt1km     = np.array(tsk - t1k)
+	dt1km	 = np.array(tsk - t1k)
 	
 	return dt1km
 	
@@ -80,7 +70,7 @@ def calculate_theta_angles(lats, lons):
 def calculate_tpw_base(press, surf, wat):
 	print('calculating tpw values')
 	# Tesselate pressure and surface pressure to 2d grids
-	dp_layers     = np.array(press[1:101]) - np.array(press[0:100])
+	dp_layers	 = np.array(press[1:101]) - np.array(press[0:100])
 	
 	press_tess = np.reshape(np.tile(press, len(surf)), (len(surf),len(press)) )
 	surf_tess = np.reshape(np.repeat(surf, len(press)), (len(surf), len(press)) )
@@ -138,20 +128,20 @@ def get_valid_data(variables, ifile, graph_data, date):
 		print(np.count_nonzero(t1), t1.size)
 	
 	## Extract all necessary variables for calculations ##
-	press     = np.array(ncf['p'])
-	vza       = np.array(ncf['satzen'])
-	lats      = np.array(ncf['latitude'])
-	lons      = np.array(ncf['longitude'])
-	zen       = np.array(ncf['solzen'])
-	cfrs      = np.array(ncf['cfr'])
-	cost      = np.array(ncf['jy'])
+	press	 = np.array(ncf['p'])
+	vza	   = np.array(ncf['satzen'])
+	lats	  = np.array(ncf['latitude'])
+	lons	  = np.array(ncf['longitude'])
+	zen	   = np.array(ncf['solzen'])
+	cfrs	  = np.array(ncf['cfr'])
+	cost	  = np.array(ncf['jy'])
 	btd_flg   = np.array(ncf['btd_flag'])
-	wat       = np.array(ncf['w'])
-	surf      = np.array(ncf['sp'])
-	t         = np.array(ncf['t'])
-	tsk       = np.array(ncf['tsk'])
-	scl       = np.array(ncf['ixt']) 
-	elev      = np.array(ncf['iasi_altitude']) # Elevation L2 data
+	wat	   = np.array(ncf['w'])
+	surf	  = np.array(ncf['sp'])
+	t		 = np.array(ncf['t'])
+	tsk	   = np.array(ncf['tsk'])
+	scl	   = np.array(ncf['ixt']) 
+	elev	  = np.array(ncf['iasi_altitude']) # Elevation L2 data
 	
 	for variable in variables:
 		if 'mgf' in variable:
@@ -164,7 +154,7 @@ def get_valid_data(variables, ifile, graph_data, date):
 	ncf.close()
 	
 	## Filtering ##
-	part_data     = [[] for var in range(len(variables)*2 + 2 + 9)]
+	part_data	 = [[] for var in range(len(variables)*2 + 2 + 9)]
 	
 	var_max_min   = [[-999,999] for var in variables]
 	tpw_max_min   = [-999,999]
@@ -174,28 +164,28 @@ def get_valid_data(variables, ifile, graph_data, date):
 	if VERBOSE:
 		print('assembling filters')
 	
-	#cfr_filter         = cfrs < 0.2
-	cfr_filter         = cfrs < 0.05
-	cost_filter        = cost < 1000
-	elev_filter        = elev < 400 # Initial filter
+	#cfr_filter		 = cfrs < 0.2
+	cfr_filter		 = cfrs < 0.05
+	cost_filter		= cost < 1000
+	elev_filter		= elev < 400 # Initial filter
 	
-	#btd_flg_filter     = btd_flg == 0 # Reconfigured for elevation 08/07/2021 15:20
+	#btd_flg_filter	 = btd_flg == 0 # Reconfigured for elevation 08/07/2021 15:20
 	
-	full_filter        = cfr_filter & cost_filter & elev_filter #btd_flg_filter
+	full_filter		= cfr_filter & cost_filter & elev_filter #btd_flg_filter
 	
 	## End Filtering ##
 	
 	## Calculations ##
 	
-	day_flag      = np.array(zen < 90).astype('int')
-	land_flag     = calculate_land_flag(lats, lons)
+	day_flag	  = np.array(zen < 90).astype('int')
+	land_flag	 = calculate_land_flag(lats, lons)
 	
-	dt1km         = calculate_dt1k(t, tsk, press)
+	dt1km		 = calculate_dt1k(t, tsk, press)
 	theta_angles  = calculate_theta_angles(lats, lons)
 
-	sec_arr       = np.cos ( np.array(vza) * (math.pi/180) )
-	tpw           = calculate_tpw_base(press, surf, wat)
-	tpwsec        = tpw / sec_arr
+	sec_arr	   = np.cos ( np.array(vza) * (math.pi/180) )
+	tpw		   = calculate_tpw_base(press, surf, wat)
+	tpwsec		= tpw / sec_arr
 
 	## Error Calculations ##
 	if VERBOSE:
@@ -340,17 +330,29 @@ def write_to_nc(graph_data, filename, var_max_min):
 
 	ncf_new.close()
 
-def main(date, version):
-	
-	instrt_long  = instrt
-	
-	base_input   = INPUTS[instrt][0]
-	second_input = INPUTS[instrt][1]
+def main(date, version, instrt, WARN=False):
+	instrt_long = instrt
+
+	f = open('file_config.json','r')
+	files = json.load(f)
+	f.close()
+	try:
+		base_input   = files[instrt][0]
+		base_outpath = files['output'][0]
+	except:
+		print('Error: Minimum inputs/outputs not configured for instrument, check config file')
+		print(files)
+		return None
+	try:
+		second_input = files[instrt][1]
+	except:
+		if WARN:
+			print('Warning: No second input specified - run with WARN=True to suppress warnings')
 	
 	date_arr = [date[0:4],date[4:6],format(int(date[6:len(date)]),'02d')]
 	
-	units           = ['ppbv']
-	variables       = ['mgf']
+	units		   = ['ppbv']
+	variables	   = ['mgf']
 	override_names  = ['nh3']
 	
 	graph_data  = [[] for var in range(len(variables)*2 + 2 + 9)] # Elevation
@@ -358,11 +360,11 @@ def main(date, version):
 	var_max_min = [[-999,999] for var in variables]
 		
 	if True: # Condition for later
-		inpath          = base_input.format(date_arr[0], date_arr[1], date_arr[2])
-		inpath_alpha    = second_input.format(date_arr[0], date_arr[1], date_arr[2])
+		inpath		  = base_input.format(date_arr[0], date_arr[1], date_arr[2])
+		inpath_alpha	= second_input.format(date_arr[0], date_arr[1], date_arr[2])
 		
 		# Some dates have multiple files so need to list all
-		files_array     = ff.list_files(inpath, starts='ral',ends='.nc')
+		files_array	 = ff.list_files(inpath, starts='ral',ends='.nc')
 		files_arr_alpha = ff.list_files(inpath_alpha, starts='ral',ends='.nc')
 		
 
@@ -404,13 +406,14 @@ def main(date, version):
 			override_names.append('tpw')
 			var_max_min.append(tpw_max_min)
 			
-			filename = '{}_valid_l2a_{}_{}.nc'.format(instrt, date, version)
-			filepath = '/gws/pw/j05/rsg_share/public/transfer/barry/6ad76b04-b3df-11eb-a4d3-024ad8e814ad/{}_l2/valid_l2a/{}/{}/{}/'.format(instrt_long, version, date_arr[0],date_arr[1])
+			filename = f'{instrt}_valid_l2a_{date}_{version}.nc'
+			filepath = f'{base_outpath}/{instrt_long}_l2/valid_l2a/{version}/{date_arr[0]}/{date_arr[1]}/'
 			if not os.path.isdir(filepath):
 				os.makedirs(filepath)
 			write_to_nc(graph_data, filepath+filename, var_max_min)
 		else:
 			print('No files for specified date for either case - {}'.format(date))
+	return None
 	# Send to text file
 	
 
@@ -440,6 +443,6 @@ if __name__ == "__main__":
 	filepath = '/gws/pw/j05/rsg_share/public/transfer/barry/6ad76b04-b3df-11eb-a4d3-024ad8e814ad/{}_l2/valid_l2a/{}/{}/{}/'.format(instrt, version, date_arr[0],date_arr[1])
 
 	if not os.path.isfile(filename+filepath):
-		main(date,version)
+		main(date,version, instrt)
 	else:
 		print('skipping existing file')

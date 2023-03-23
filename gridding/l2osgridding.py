@@ -1,3 +1,13 @@
+"""
+L3 oversampled gridding script
+--------------
+Takes oversampled daily files and averages to monthly files on a regular grid
+
+"""
+__author__	= "Daniel Westwood"
+__date__	  = "23-03-2023"
+__copyright__ = "Copyright 2020 United Kingdom Research and Innovation"
+
 import os
 import sys
 from datetime import datetime
@@ -6,16 +16,9 @@ from getopt import getopt
 import numpy as np
 from netCDF4 import Dataset
 
-# Standard dw package tools
-STD_PY_LOC = '/home/users/dwest77/Documents/std_py'
-try:
-    sys.path.append(STD_PY_LOC)
-    import find_files as ff
-    import pmath as pm
-    import output_data as od
-except: 
-    print('ImportError: Std_py library missing: requires file_import.py, find_files.py and pmath.py as minimum')
-    sys.exit()
+# Standard pyanalysis package tools
+from pyanalysis import fileIO as ff
+from pyanalysis import datasetMath as dm
     
     
 # Combine daily files into monthly gridded files
